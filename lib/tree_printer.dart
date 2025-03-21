@@ -46,10 +46,6 @@ class TreePrinter {
 
       // Sort the root level children based on criteria
       _sortNodes(rootNode.children);
-
-      // Print the tree
-      print('Sorting: $sortBy and $sortDirection');
-      print('');
       _printTree(rootNode, prefix: '');
     } catch (e) {
       print('Error processing directory tree: $e');
