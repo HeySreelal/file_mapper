@@ -13,6 +13,7 @@ class CliOptions {
   final List<String> ignorePatterns;
   final SortBy sortBy;
   final SortDirection sortDirection;
+  final int? maxLevel; // New parameter for maximum directory depth
 
   CliOptions({
     required this.showSizes,
@@ -20,6 +21,7 @@ class CliOptions {
     required this.ignorePatterns,
     required this.sortBy,
     required this.sortDirection,
+    this.maxLevel, // Optional parameter
   });
 }
 
@@ -67,6 +69,12 @@ class CliParser {
               'asc': 'Sort in ascending order',
               'desc': 'Sort in descending order',
             },
+          )
+          ..addOption(
+            'level',
+            abbr: 'l',
+            help: 'Maximum directory depth to display',
+            valueHelp: 'n',
           );
 
     try {
@@ -96,12 +104,30 @@ class CliParser {
           break;
       }
 
+      // Parse max level
+      int? maxLevel;
+      final levelOption = results['level'];
+      if (levelOption != null) {
+        try {
+          maxLevel = int.parse(levelOption as String);
+          if (maxLevel < 0) {
+            print(
+              'Warning: Level must be non-negative. Using unlimited depth.',
+            );
+            maxLevel = null;
+          }
+        } catch (e) {
+          print('Warning: Invalid level value. Using unlimited depth.');
+        }
+      }
+
       return CliOptions(
         showSizes: results['size'] as bool,
         showHelp: results['help'] as bool,
         ignorePatterns: results['ignore'] as List<String>,
         sortBy: sortBy,
         sortDirection: sortDirection,
+        maxLevel: maxLevel,
       );
     } catch (e) {
       // In case of invalid arguments, show help and exit
@@ -148,6 +174,12 @@ class CliParser {
               'asc': 'Sort in ascending order',
               'desc': 'Sort in descending order',
             },
+          )
+          ..addOption(
+            'level',
+            abbr: 'l',
+            help: 'Maximum directory depth to display',
+            valueHelp: 'n',
           );
 
     _printUsage(parser);

@@ -28,12 +28,14 @@ class TreePrinter {
   final bool showSizes;
   final SortBy sortBy;
   final SortDirection sortDirection;
+  final int? maxLevel;
 
   TreePrinter({
     required this.ignorePatterns,
     this.showSizes = false,
     this.sortBy = SortBy.name,
     this.sortDirection = SortDirection.ascending,
+    this.maxLevel,
   });
 
   Future<void> printDirectoryTree(
@@ -41,8 +43,8 @@ class TreePrinter {
     String prefix = '',
   }) async {
     try {
-      // Build a complete representation of the file tree
-      final rootNode = await _buildFileTree(directory);
+      // Build a complete representation of the file tree with depth control
+      final rootNode = await _buildFileTree(directory, currentLevel: 0);
 
       // Sort the root level children based on criteria
       _sortNodes(rootNode.children);
@@ -52,8 +54,11 @@ class TreePrinter {
     }
   }
 
-  /// Builds a complete file tree with calculated sizes
-  Future<FileNode> _buildFileTree(Directory directory) async {
+  /// Builds a complete file tree with calculated sizes, respecting maxLevel
+  Future<FileNode> _buildFileTree(
+    Directory directory, {
+    required int currentLevel,
+  }) async {
     final dirName = directory.path.split(Platform.pathSeparator).last;
 
     // Create the root node
@@ -62,6 +67,11 @@ class TreePrinter {
       path: directory.path,
       isDirectory: true,
     );
+
+    // If we've reached the maximum depth and it's not unlimited, don't process children
+    if (maxLevel != null && currentLevel >= maxLevel!) {
+      return rootNode;
+    }
 
     try {
       // Get all entries in the directory
@@ -87,8 +97,11 @@ class TreePrinter {
             ),
           );
         } else if (entry is Directory) {
-          // Process directory recursively
-          final dirNode = await _buildFileTree(entry);
+          // Process directory recursively with incremented level
+          final dirNode = await _buildFileTree(
+            entry,
+            currentLevel: currentLevel + 1,
+          );
           children.add(dirNode);
         }
       }
@@ -165,7 +178,8 @@ class TreePrinter {
       }
 
       // Print the current entry
-      print('$prefix$connector${child.name}$sizeInfo');
+      final displayName = child.isDirectory ? '${child.name}/' : child.name;
+      print('$prefix$connector$displayName$sizeInfo');
 
       // Recursively process directories
       if (child.isDirectory) {
