@@ -25,6 +25,8 @@ void main(List<String> args) async {
   final treePrinter = TreePrinter(
     ignorePatterns: ignorePatterns,
     showSizes: cliOptions.showSizes,
+    sortBy: cliOptions.sortBy,
+    sortDirection: cliOptions.sortDirection,
   );
 
   // Print directory tree starting from current directory
