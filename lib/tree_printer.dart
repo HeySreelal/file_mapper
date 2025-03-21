@@ -28,11 +28,11 @@ class TreePrinter {
       final entry = entries[i];
       final isLast = i == entries.length - 1;
 
-      // Determine the appropriate connector
-      final connector = isLast ? '└── ' : '├── ';
-
       // Skip entries matching ignore patterns
       if (shouldSkipEntry(entry)) continue;
+
+      // Determine the appropriate connector
+      final connector = isLast ? '└── ' : '├── ';
 
       // Get the relative path from the current directory
       final relativePath = entry.path.replaceFirst(
@@ -86,27 +86,48 @@ class TreePrinter {
     int totalSize = 0;
 
     try {
-      final completer = Completer<int>();
+      // Skip processing if the directory matches ignore patterns
+      if (shouldSkipEntry(directory)) {
+        return 0;
+      }
+
+      // Use a list to collect all pending file operations
+      final futures = <Future<void>>[];
       final lister = directory.list(recursive: true);
 
+      // Create a completer to signal when all work is done
+      final completer = Completer<int>();
+
       final subscription = lister.listen(
-        (entity) async {
-          if (entity is File) {
-            try {
-              totalSize += await entity.length();
-            } catch (_) {
-              // Ignore errors for individual files
-            }
+        (entity) {
+          if (entity is File && !shouldSkipEntry(entity)) {
+            // Add each file operation to our list of futures
+            final future = entity.length().then((size) {
+              totalSize += size;
+            });
+
+            futures.add(future);
           }
         },
-        onDone: () => completer.complete(totalSize),
-        onError: (e) => completer.complete(totalSize),
+        onDone: () {
+          // When the directory listing is complete, wait for all file operations
+          Future.wait(futures)
+              .then((_) {
+                completer.complete(totalSize);
+              })
+              .catchError((e) {
+                completer.complete(totalSize);
+              });
+        },
+        onError: (e) {
+          completer.complete(totalSize);
+        },
         cancelOnError: false,
       );
 
-      // Set a timeout of 2 seconds to avoid hanging on large directories
+      // Set a timeout of 5 seconds to avoid hanging on large directories
       return await completer.future.timeout(
-        Duration(seconds: 2),
+        Duration(seconds: 5),
         onTimeout: () {
           subscription.cancel();
           return totalSize;
