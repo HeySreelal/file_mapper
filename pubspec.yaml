@@ -1,16 +1,24 @@
 name: file_mapper
-description: A sample command-line application.
+description: CLI tool that visualizes directory structures with colorized output, customizable filtering, sorting, and depth control
 version: 1.0.0
-# repository: https://github.com/my_org/my_repo
+repository: https://github.com/HeySreelal/file_mapper
 
 environment:
   sdk: ^3.7.2
 
-# Add regular dependencies here.
 dependencies:
   args: ^2.7.0
-  # path: ^1.8.0
 
 dev_dependencies:
   lints: ^5.0.0
   test: ^1.24.0
+
+topics:
+  - cli
+  - filesystem
+  - directory
+  - visualization
+  - file-management
+
+funding:
+  - https://paypal.me/sreelalts
