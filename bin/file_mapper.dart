@@ -40,7 +40,9 @@ void main(List<String> args) async {
       'Displaying directory structure with maximum depth: ${cliOptions.maxLevel}.',
     );
     if (cliOptions.showSizes) {
-      print('Directory sizes will not be accurate.\n');
+      print(
+        'Directory sizes might not be accurate as we count to the specified depth only..\n',
+      );
     }
   }
 
