@@ -41,7 +41,7 @@ void main(List<String> args) async {
     );
     if (cliOptions.showSizes) {
       print(
-        'Directory sizes might not be accurate as we count to the specified depth only..\n',
+        'Directory sizes might not be accurate as we count to the specified depth only.\n',
       );
     }
   }
