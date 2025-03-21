@@ -1,21 +1,46 @@
 import 'dart:io';
 import 'package:args/args.dart';
-import 'console_colors.dart'; // Import console colors
+import 'console_colors.dart';
 
-// Enum for sort criteria
-enum SortBy { name, size }
+/// Defines sorting criteria options for directory entries
+enum SortBy {
+  /// Sort entries by name
+  name,
 
-// Enum for sort direction
-enum SortDirection { ascending, descending }
+  /// Sort entries by size
+  size,
+}
 
+/// Defines sorting direction options
+enum SortDirection {
+  /// Sort in ascending order (A-Z, smallest to largest)
+  ascending,
+
+  /// Sort in descending order (Z-A, largest to smallest)
+  descending,
+}
+
+/// Holds the parsed command-line options for the application
 class CliOptions {
+  /// Whether to display file and directory sizes
   final bool showSizes;
+
+  /// Whether to display help information
   final bool showHelp;
+
+  /// List of patterns to ignore when traversing directories
   final List<String> ignorePatterns;
+
+  /// The criteria to sort directory entries by
   final SortBy sortBy;
+
+  /// The direction to sort directory entries
   final SortDirection sortDirection;
+
+  /// Maximum directory depth to traverse (null for unlimited)
   final int? maxLevel;
 
+  /// Creates a new [CliOptions] instance with the specified parameters
   CliOptions({
     required this.showSizes,
     required this.showHelp,
@@ -26,8 +51,14 @@ class CliOptions {
   });
 }
 
+/// Parses and manages command-line arguments for the file mapper application
 class CliParser {
   /// Parses command line arguments and returns structured options
+  ///
+  /// Takes a list of command-line [args] and transforms them into a structured
+  /// [CliOptions] object. Handles validation and defaults for all options.
+  ///
+  /// If invalid arguments are provided, displays an error message and exits.
   static CliOptions parse(List<String> args) {
     final parser =
         ArgParser()
@@ -144,7 +175,10 @@ class CliParser {
     }
   }
 
-  /// Prints usage information
+  /// Displays help and usage information for the application
+  ///
+  /// Prints a formatted help message showing all available options,
+  /// their descriptions, and example commands.
   static void printHelp() {
     final parser =
         ArgParser()
@@ -193,6 +227,10 @@ class CliParser {
     _printUsage(parser);
   }
 
+  /// Prints the usage information using the provided parser
+  ///
+  /// Helper method to print formatted usage information including
+  /// all available options, their descriptions, and usage examples.
   static void _printUsage(ArgParser parser) {
     print(
       '\n${ConsoleColors.bold}${ConsoleColors.green}File Mapper - Directory Visualization Tool${ConsoleColors.reset}\n',

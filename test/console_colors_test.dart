@@ -1,5 +1,5 @@
-import 'package:test/test.dart';
 import 'package:file_mapper/console_colors.dart';
+import 'package:test/test.dart';
 
 void main() {
   group('ConsoleColors Tests', () {
