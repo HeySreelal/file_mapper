@@ -21,14 +21,34 @@ void main(List<String> args) async {
     ...cliOptions.ignorePatterns,
   ];
 
-  // Create tree printer with combined settings
+  // Create tree printer with combined settings including maxLevel
   final treePrinter = TreePrinter(
     ignorePatterns: ignorePatterns,
     showSizes: cliOptions.showSizes,
+    sortBy: cliOptions.sortBy,
+    sortDirection: cliOptions.sortDirection,
+    maxLevel: cliOptions.maxLevel,
   );
 
   // Print directory tree starting from current directory
   final rootDirectory = Directory.current;
-  print('Directory: ${rootDirectory.path}\n');
+  print(ConsoleColors.info('Directory: ${rootDirectory.path}\n'));
+
+  // If level parameter is specified, inform the user
+  if (cliOptions.maxLevel != null) {
+    print(
+      ConsoleColors.info(
+        'Displaying directory structure with maximum depth: ${cliOptions.maxLevel}.',
+      ),
+    );
+    if (cliOptions.showSizes) {
+      print(
+        ConsoleColors.warning(
+          'Directory sizes might not be accurate as we count to the specified depth only.\n',
+        ),
+      );
+    }
+  }
+
   await treePrinter.printDirectoryTree(rootDirectory);
 }
