@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'cli_parser.dart';
+import 'console_colors.dart'; // Import console colors
 
 /// Node class to represent a file or directory in the tree
 class FileNode {
@@ -48,10 +49,55 @@ class TreePrinter {
 
       // Sort the root level children based on criteria
       _sortNodes(rootNode.children);
+
+      // Print summary information
+      final totalFiles = _countFiles(rootNode);
+      final totalDirs = _countDirs(rootNode);
+      final totalSize = rootNode.size;
+
       _printTree(rootNode, prefix: '');
+
+      // Print summary footer
+      print('\n${ConsoleColors.bold}Summary:${ConsoleColors.reset}');
+      print(
+        '${ConsoleColors.info('Total files:')} ${ConsoleColors.success(totalFiles.toString())}',
+      );
+      print(
+        '${ConsoleColors.info('Total directories:')} ${ConsoleColors.success(totalDirs.toString())}',
+      );
+      if (showSizes) {
+        print(
+          '${ConsoleColors.info('Total size:')} ${ConsoleColors.success(_formatSize(totalSize))}',
+        );
+      }
     } catch (e) {
-      print('Error processing directory tree: $e');
+      print(ConsoleColors.error('Error processing directory tree: $e'));
     }
+  }
+
+  /// Count total number of files
+  int _countFiles(FileNode node) {
+    int count = 0;
+    for (final child in node.children) {
+      if (!child.isDirectory) {
+        count++;
+      } else {
+        count += _countFiles(child);
+      }
+    }
+    return count;
+  }
+
+  /// Count total number of directories
+  int _countDirs(FileNode node) {
+    int count = 0;
+    for (final child in node.children) {
+      if (child.isDirectory) {
+        count++; // Count this directory
+        count += _countDirs(child); // Count subdirectories
+      }
+    }
+    return count;
   }
 
   /// Builds a complete file tree with calculated sizes, respecting maxLevel
@@ -119,7 +165,7 @@ class TreePrinter {
 
       return rootNode;
     } catch (e) {
-      print('Error building file tree for $dirName: $e');
+      print(ConsoleColors.error('Error building file tree for $dirName: $e'));
       return rootNode;
     }
   }
@@ -174,16 +220,20 @@ class TreePrinter {
       // Calculate size info if needed
       String sizeInfo = '';
       if (showSizes) {
-        sizeInfo = ' (${_formatSize(child.size)})';
+        sizeInfo = ' ${ConsoleColors.size(_formatSize(child.size))}';
       }
 
       // Print the current entry
-      final displayName = child.isDirectory ? '${child.name}/' : child.name;
-      print('$prefix$connector$displayName$sizeInfo');
-
-      // Recursively process directories
       if (child.isDirectory) {
+        // Directory with trailing slash
+        final dirName = '${child.name}/';
+        print('$prefix$connector${ConsoleColors.directory(dirName)}$sizeInfo');
+
+        // Recursively process directory
         _printTree(child, prefix: prefix + (isLast ? '    ' : '│   '));
+      } else {
+        // Regular file
+        print('$prefix$connector${ConsoleColors.file(child.name)}$sizeInfo');
       }
     }
   }

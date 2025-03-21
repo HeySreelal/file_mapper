@@ -32,16 +32,20 @@ void main(List<String> args) async {
 
   // Print directory tree starting from current directory
   final rootDirectory = Directory.current;
-  print('Directory: ${rootDirectory.path}\n');
+  print(ConsoleColors.info('Directory: ${rootDirectory.path}\n'));
 
   // If level parameter is specified, inform the user
   if (cliOptions.maxLevel != null) {
     print(
-      'Displaying directory structure with maximum depth: ${cliOptions.maxLevel}.',
+      ConsoleColors.info(
+        'Displaying directory structure with maximum depth: ${cliOptions.maxLevel}.',
+      ),
     );
     if (cliOptions.showSizes) {
       print(
-        'Directory sizes might not be accurate as we count to the specified depth only.\n',
+        ConsoleColors.warning(
+          'Directory sizes might not be accurate as we count to the specified depth only.\n',
+        ),
       );
     }
   }
