@@ -1,7 +1,9 @@
 name: file_mapper
 description: CLI tool that visualizes directory structures with colorized output, customizable filtering, sorting, and depth control
-version: 1.0.1
+version: 1.0.2
+
 repository: https://github.com/HeySreelal/file_mapper
+homepage: https://xooniverse.com
 
 environment:
   sdk: ^3.7.2
@@ -22,3 +24,7 @@ topics:
 
 funding:
   - https://paypal.me/sreelalts
+
+
+executables: 
+  file_mapper:
