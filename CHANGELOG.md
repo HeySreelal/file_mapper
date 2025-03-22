@@ -1,3 +1,7 @@
+## 1.0.3
+
+- Added `quiet` flag to suppress errors
+
 ## 1.0.2
 
 - Registered executable
