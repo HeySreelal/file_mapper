@@ -63,6 +63,9 @@ class TreePrinter {
   /// Maximum directory depth to display (null means unlimited).
   final int? maxLevel;
 
+  /// Whether to suppress error messages.
+  final bool suppressErrors;
+
   /// Creates a new [TreePrinter] with the specified options.
   ///
   /// [ignorePatterns] Patterns to ignore when processing files and directories.
@@ -70,11 +73,13 @@ class TreePrinter {
   /// [sortBy] Criteria to use for sorting files and directories (default: name).
   /// [sortDirection] Direction to sort files and directories (default: ascending).
   /// [maxLevel] Maximum directory depth to display (default: null, which means unlimited).
+  /// [suppressErrors] Whether to suppress error messages (default: false).
   TreePrinter({
     required this.ignorePatterns,
     this.showSizes = false,
     this.sortBy = SortBy.name,
     this.sortDirection = SortDirection.ascending,
+    this.suppressErrors = false,
     this.maxLevel,
   });
 
@@ -113,7 +118,9 @@ class TreePrinter {
         );
       }
     } catch (e) {
-      print(ConsoleColors.error('Error processing directory tree: $e'));
+      if (!suppressErrors) {
+        print(ConsoleColors.error('Error processing directory tree: $e'));
+      }
     }
   }
 
@@ -126,6 +133,36 @@ class TreePrinter {
 
     return ignorePatterns.any((pattern) => fileName.contains(pattern)) ||
         fileName.startsWith('.');
+  }
+
+  /// Log error message if error suppression is disabled
+  ///
+  /// [message] The error message to log
+  void _logError(String message) {
+    if (!suppressErrors) {
+      print(ConsoleColors.error(message));
+    }
+  }
+
+  /// Checks if an error should cause us to skip directory traversal
+  ///
+  /// [error] The exception that occurred
+  /// Returns true if we should skip traversal
+  bool _shouldSkipTraversal(Object error) {
+    if (error is PathAccessException && error.osError != null) {
+      // Permission errors (e.g., "Operation not permitted")
+      return error.osError!.errorCode == 1 ||
+          error.osError!.errorCode == 13; // EACCES
+    } else if (error is FileSystemException && error.osError != null) {
+      // Filename too long or other filesystem errors
+      return error.osError!.errorCode == 63 || // ENAMETOOLONG
+          error.osError!.errorCode == 36 || // ENAMETOOLONG on some systems
+          error.osError!.errorCode == 2; // ENOENT
+    } else if (error is PathNotFoundException && error.osError != null) {
+      final codes = [2, 63];
+      return codes.contains(error.osError!.errorCode);
+    }
+    return false;
   }
 
   int _countFiles(FileNode node) {
@@ -168,7 +205,18 @@ class TreePrinter {
     }
 
     try {
-      final entries = await directory.list().toList();
+      final List<FileSystemEntity> entries = [];
+
+      try {
+        entries.addAll(await directory.list().toList());
+      } catch (e) {
+        if (_shouldSkipTraversal(e)) {
+          return rootNode;
+        } else {
+          // For other errors, propagate them
+          rethrow;
+        }
+      }
 
       final List<FileNode> children = [];
       for (final entry in entries) {
@@ -177,21 +225,54 @@ class TreePrinter {
         final fileName = entry.path.split(Platform.pathSeparator).last;
 
         if (entry is File) {
-          final size = await entry.length();
-          children.add(
-            FileNode(
-              name: fileName,
-              path: entry.path,
-              isDirectory: false,
-              size: size,
-            ),
-          );
+          try {
+            final size = await entry.length();
+            children.add(
+              FileNode(
+                name: fileName,
+                path: entry.path,
+                isDirectory: false,
+                size: size,
+              ),
+            );
+          } catch (e) {
+            if (!suppressErrors) {
+              _logError('Error getting size of file ${e.toString()}');
+            }
+            // Add the file with size 0 to maintain tree structure
+            children.add(
+              FileNode(
+                name: fileName,
+                path: entry.path,
+                isDirectory: false,
+                size: -1, // We'll show as unknown.
+              ),
+            );
+          }
         } else if (entry is Directory) {
-          final dirNode = await _buildFileTree(
-            entry,
-            currentLevel: currentLevel + 1,
-          );
-          children.add(dirNode);
+          try {
+            final dirNode = await _buildFileTree(
+              entry,
+              currentLevel: currentLevel + 1,
+            );
+            children.add(dirNode);
+          } catch (e) {
+            if (_shouldSkipTraversal(e)) {
+              // Add directory with no children
+              _logError('Skipped directory ${entry.path}: ${e.toString()}');
+              children.add(
+                FileNode(name: fileName, path: entry.path, isDirectory: true),
+              );
+            } else if (!suppressErrors) {
+              // For other errors, log and continue if not suppressing
+              _logError(
+                'Error processing directory ${entry.path}: ${e.toString()}',
+              );
+              children.add(
+                FileNode(name: fileName, path: entry.path, isDirectory: true),
+              );
+            }
+          }
         }
       }
 
@@ -205,7 +286,7 @@ class TreePrinter {
 
       return rootNode;
     } catch (e) {
-      print(ConsoleColors.error('Error building file tree for $dirName: $e'));
+      _logError('Error building file tree for $dirName: ${e.toString()}');
       return rootNode;
     }
   }

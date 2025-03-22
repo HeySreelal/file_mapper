@@ -40,6 +40,9 @@ class CliOptions {
   /// Maximum directory depth to traverse (null for unlimited)
   final int? maxLevel;
 
+  /// Whether to suppress error messages
+  final bool suppressErrors;
+
   /// Creates a new [CliOptions] instance with the specified parameters
   CliOptions({
     required this.showSizes,
@@ -47,6 +50,7 @@ class CliOptions {
     required this.ignorePatterns,
     required this.sortBy,
     required this.sortDirection,
+    required this.suppressErrors,
     this.maxLevel,
   });
 }
@@ -73,6 +77,13 @@ class CliParser {
             'help',
             abbr: 'h',
             help: 'Show help information',
+            negatable: false,
+            defaultsTo: false,
+          )
+          ..addFlag(
+            'quiet',
+            abbr: 'q',
+            help: 'Suppress error messages',
             negatable: false,
             defaultsTo: false,
           )
@@ -165,6 +176,7 @@ class CliParser {
         ignorePatterns: results['ignore'] as List<String>,
         sortBy: sortBy,
         sortDirection: sortDirection,
+        suppressErrors: results['quiet'] as bool,
         maxLevel: maxLevel,
       );
     } catch (e) {
@@ -192,6 +204,12 @@ class CliParser {
             'help',
             abbr: 'h',
             help: 'Show help information',
+            negatable: false,
+          )
+          ..addFlag(
+            'quiet',
+            abbr: 'q',
+            help: 'Suppress error messages',
             negatable: false,
           )
           ..addMultiOption(
@@ -309,6 +327,11 @@ class CliParser {
       '  ${ConsoleColors.gray}# Ignore node_modules and .git directories${ConsoleColors.reset}',
     );
     print('  file_mapper --ignore node_modules --ignore .git\n');
+
+    print(
+      '  ${ConsoleColors.gray}# Suppress error messages${ConsoleColors.reset}',
+    );
+    print('  file_mapper --quiet\n');
 
     print(
       ConsoleColors.info(
