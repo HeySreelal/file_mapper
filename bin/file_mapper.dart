@@ -28,6 +28,7 @@ void main(List<String> args) async {
     sortBy: cliOptions.sortBy,
     sortDirection: cliOptions.sortDirection,
     maxLevel: cliOptions.maxLevel,
+    suppressErrors: cliOptions.suppressErrors,
   );
 
   // Print directory tree starting from current directory
